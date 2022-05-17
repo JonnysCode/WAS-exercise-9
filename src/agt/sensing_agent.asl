@@ -52,6 +52,12 @@ i_have_plans_for(R) :-
 	.print("Received a certified reference from ", Ag, ": New ", C, " rating ", V, " for agent ", B, " who interacted with agent ", A, " in interaction ", I).
 
 
++sendCertificate[source(Src)] : certified_reference(rating(A, B, C, I, V), signedBy(Ag)) & V > 0.0
+<-
+	.print("Sending certificate to ", Src);
+	.send(Src, tell, certified_reference(rating(A, B, C, I, V), signedBy(Ag))).
+
+
 +deployedOrg(OrgName, GroupName): true <-
 	.print("Joining deployed org: ", OrgName);
 

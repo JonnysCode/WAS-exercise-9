@@ -22,13 +22,19 @@ all_temperature_readings_received :-
 <- 	.my_name(Me);
 	.print("Hello from ",Me);
 	makeArtifact("converter", "tools.Converter", [], ConverterArtId);
-  	focus(ConverterArtId).
+  	focus(ConverterArtId);
+	makeArtifact("sd", "tools.SDBasedEvaluator", [], StdArtId);
+	focus(StdArtId).
 
 // Plan to achieve manifesting the air temperature using a robotic arm
 +!manifest_temperature : all_temperature_readings_received
 <-
 	.print("Received all temperature readings");
+	!requestCertificates;
+	.wait(2000);
+
 	!caluculateRatings;
+	!calculateAvgRatings;
 	!findBestRating;
 	!writeTemperature.
 
@@ -39,10 +45,6 @@ all_temperature_readings_received :-
 	.findall(K, .member([K, _], TempAgValues), TempValues);
 	.findall(K, .member([_, K], TempAgValues), AgValues);
 
-	.print(TempValues);
-	.print(AgValues);
-
-	makeArtifact("standardCalc", "tools.SDBasedEvaluator", [], StdArtId);
 	evaluateDeviations(TempValues, Deviations, MinDeviation, MaxDeviation);
 
 	for ( .range(I, 0, (.length(TempValues) - 1)) ) {
@@ -56,9 +58,31 @@ all_temperature_readings_received :-
     }.
 
 
-+!findBestRating : true
++!requestCertificates : true
 <-
-	.findall([R, A], rating(A, _, _, _, R), AgRatingValues);
+	.findall(Ag, temperature(_)[source(Ag)], Agents);
+
+	for ( .member(Ag, Agents) ) {
+		.send(Ag, tell, sendCertificate);
+    }.
+
+
++!calculateAvgRatings : .my_name(Me)
+<-
+	.findall(Ag, temperature(_)[source(Ag)], Agents);
+
+	for ( .member(Ag, Agents) ) {
+		.findall(R, rating(Ag, _, quality, _, R), Ratings);
+		avg(Ratings, AvgRating);
+
+		.print("Agent: ", Ag, ", has average rating of: ", AvgRating);
+		+rating(Ag, Me, average, temperature(0), AvgRating);
+    }.
+
+
++!findBestRating : .my_name(Me)
+<-
+	.findall([R, A], rating(A, Me, average, _, R), AgRatingValues);
 
 	.max(AgRatingValues, Max);
 	.nth(0, Max, R);
@@ -78,6 +102,7 @@ all_temperature_readings_received :-
 	setAPIKey("1a313a6c5340caf9d3dc51bab400e318");
 	invokeAction("setWristAngle", ["value"], [ConvertedValue]).
 
+
 /*
 	The agent reacts when a new rating is added to its belief base by printing a relevant message
 	A: The agent who has been rated
@@ -89,6 +114,12 @@ all_temperature_readings_received :-
 +rating(A, B, C, I, V): true
 <-
 	.print("New ", C, " rating ", V, " for agent ", B, " who interacted with agent ", A, " in interaction ", I).
+
+
++certified_reference(rating(A, B, C, I, V), signedBy(certification_agent)) : true
+<-
+	.print("Add certified rating for ", A);
+	+rating(A, B, C, I, V).
 
 
 +availableRole(OrgName, GroupName, R) : i_have_plans_for(R) & .my_name(Me)

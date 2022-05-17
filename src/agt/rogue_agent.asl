@@ -3,7 +3,7 @@
 /* Initial beliefs and rules */
 // initially, the agent believes that it hasn't received any temperature readings
 // gradually, the list will fill, e.g., received_readings([])
-received_readings([]).
+//received_readings([]).
 
 /* Initial goals */
 !set_up_plans.
@@ -21,6 +21,7 @@ received_readings([]).
   // add a new plan for reading the temperature that doesn't require contacting the weather station
   // the agent will pick one of the first three temperature readings that have been broadcasted,
   // it will slightly change the reading, and boradcast it
+  /*
   .add_plan({ +!read_temperature : received_readings(TempReadings) &
     .length(TempReadings) >=3
     <-
@@ -51,8 +52,21 @@ received_readings([]).
     -+received_readings(NewTempReadings);
 
     // try again to "read" the temperature
-    !read_temperature }).
+    !read_temperature });
+    */
 
+  // Task 2
+  .add_plan({ +!read_temperature : temperature(TempValue)[source(sensing_agent_9)]
+    <-
+    .print("Mirror rogue leader");
+    .print("Temperature Reading (Celcius): ", TempValue);
+    .broadcast(tell, temperature(TempValue)) });
+
+  // Try again 
+  .add_plan({ +!read_temperature : true
+    <-
+    .wait(2000);
+    !read_temperature }).
 
 
 { include("sensing_agent.asl")}

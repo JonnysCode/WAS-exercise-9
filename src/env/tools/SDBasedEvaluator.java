@@ -2,6 +2,7 @@ package tools;
 
 import cartago.*;
 import java.util.Arrays;
+import java.util.stream.DoubleStream;
 import java.lang.Math;
 
 /**
@@ -11,17 +12,22 @@ import java.lang.Math;
 public class SDBasedEvaluator extends Artifact {
 
   /**
-  * CArtAgO operation for evaluating how many standard deviations each value from an array
-  * deviates from the mean (as calculated by the values of the array).
-  * @param values An array of values
-  * @param deviations The calculated array of deviations (computed in standard
-  *        deviations). Each deviation corresponds to how many standard
-  *        deviations the corresponding value deviates from the mean.
-  * @param minDeviation The minimum deviation found in deviations
-  * @param maxDeviation The maximum deviation found in deviations
-  */
+   * CArtAgO operation for evaluating how many standard deviations each value from
+   * an array
+   * deviates from the mean (as calculated by the values of the array).
+   * 
+   * @param values       An array of values
+   * @param deviations   The calculated array of deviations (computed in standard
+   *                     deviations). Each deviation corresponds to how many
+   *                     standard
+   *                     deviations the corresponding value deviates from the
+   *                     mean.
+   * @param minDeviation The minimum deviation found in deviations
+   * @param maxDeviation The maximum deviation found in deviations
+   */
   @OPERATION
-  public void evaluateDeviations(Object[] values, OpFeedbackParam<Double[]> deviations,  OpFeedbackParam<Double> minDeviation,  OpFeedbackParam<Double> maxDeviation) {
+  public void evaluateDeviations(Object[] values, OpFeedbackParam<Double[]> deviations,
+      OpFeedbackParam<Double> minDeviation, OpFeedbackParam<Double> maxDeviation) {
 
     // sum of all values
     double sum = 0.0;
@@ -38,13 +44,12 @@ public class SDBasedEvaluator extends Artifact {
 
     // deviations from the mean in terms of standard valueDeviations
     // i.e. how many standard deviations each value deviates from the mean
-    Double[] valueDeviationsToSort = new Double[valuesNum]; //helper
+    Double[] valueDeviationsToSort = new Double[valuesNum]; // helper
     Double[] valueDeviations = new Double[valuesNum];
-
 
     // calculate the sum of all values
     for (int i = 0; i < valuesNum; i++) {
-        sum = sum + Double.valueOf(values[i].toString());
+      sum = sum + Double.valueOf(values[i].toString());
     }
 
     // calculate the mean of values
@@ -52,9 +57,9 @@ public class SDBasedEvaluator extends Artifact {
 
     // calculate the standard deviation
     for (int i = 0; i < valuesNum; i++) {
-        sd = sd + Math.pow((Double.valueOf(values[i].toString()) - mean), 2);
+      sd = sd + Math.pow((Double.valueOf(values[i].toString()) - mean), 2);
     }
-    standardDeviation =  Math.sqrt(sd / valuesNum);
+    standardDeviation = Math.sqrt(sd / valuesNum);
 
     // uncomment to observe the standard deviation or the mean
     // System.out.println("Standard Deviation: "+ standardDeviation);
@@ -62,13 +67,13 @@ public class SDBasedEvaluator extends Artifact {
 
     // calculate how many standard deviations each value deviates from mean
     // all deviations are stored in an array
-    for (int i=0; i < valuesNum; i++) {
-      valueDeviations[i] = Math.abs(mean - Double.valueOf(values[i].toString()))/standardDeviation;
+    for (int i = 0; i < valuesNum; i++) {
+      valueDeviations[i] = Math.abs(mean - Double.valueOf(values[i].toString())) / standardDeviation;
     }
 
     // sort the deviations in aschending order
     for (int i = 0; i < valuesNum; i++) {
-        valueDeviationsToSort[i] = valueDeviations[i];
+      valueDeviationsToSort[i] = valueDeviations[i];
     }
     Arrays.sort(valueDeviationsToSort);
 
@@ -86,5 +91,14 @@ public class SDBasedEvaluator extends Artifact {
 
     // set the maximum deviation in deviations to be returned to the caller
     maxDeviation.set(maxValueDeviation);
+  }
+
+  @OPERATION
+  public void avg(Object[] values, OpFeedbackParam<Double> avg) {
+
+    Double sum = Arrays.stream(values).mapToDouble(v -> Double.valueOf(v.toString())).sum();
+    log("SUM: " + sum);
+
+    avg.set(sum / (double) values.length);
   }
 }
