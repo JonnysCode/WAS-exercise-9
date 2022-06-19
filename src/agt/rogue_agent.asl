@@ -58,6 +58,7 @@
   // Task 2
   .add_plan({ +!read_temperature : temperature(TempValue)[source(sensing_agent_9)]
     <-
+
     .print("Mirror rogue leader");
     .print("Temperature Reading (Celcius): ", TempValue);
     .broadcast(tell, temperature(TempValue)) });
@@ -66,7 +67,14 @@
   .add_plan({ +!read_temperature : true
     <-
     .wait(2000);
-    !read_temperature }).
+    !read_temperature });
+    
+  .add_plan({
+    +sendCertificate[source(Src)] : true
+    <-
+      .print("Sending fake certificate to ", Src);
+      .send(Src, tell, certified_reference(rating(sensing_agent_9, certification_agent, quality, temperature(10), 1.0), signedBy(certification_agent)));
+  }).
 
 
 { include("sensing_agent.asl")}
